@@ -24,13 +24,13 @@ int usb_fd;
 
 char buffer[BUFFER_SIZE];
 void add_color(char *buffer, int *p, int *nibble, char color) {
-    if (nibble == 0) {
-        buffer[*p++] = 0x1;
+    if (*nibble == 0) {
+        buffer[(*p)++] = 0x1;
         buffer[*p] = (color & 0xf0) >> 4;
     } else {
-        buffer[*p] |= (color & 0xf0);
+        buffer[(*p)++] |= (color & 0xf0);
     }
-    *nibble = !*nibble;
+    *nibble = !(*nibble);
 }
 void draw_table(void) {
     int i, j, k, p = 0, nibble = 0;
