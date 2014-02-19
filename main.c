@@ -63,7 +63,7 @@ void process_block(fvec_t * ibuf, fvec_t *obuf) {
   else
     aubio_wavetable_do (wavetable, obuf, obuf);
 
-  rgb_iterate(my_last_beat, samples_per_beat, total_frames, freq);
+  rgb_music_iterate(my_last_beat, samples_per_beat, total_frames, freq);
 
   total_frames += hop_size;
 }
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
   buffer_size = 1024;
   hop_size = 512;
 
-  rgb_init();
+  rgb_music_init();
 
   examples_common_init(argc,argv);
 
