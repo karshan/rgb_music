@@ -17,21 +17,11 @@ void myflush(int fd) {
 }
 
 void sendb(int fd, int tx9, unsigned char add) {
-    char buf[2];
-    buf[0] = tx9?0xf0:0x01;
-    buf[1] = add;
-    mywrite(fd, buf, 2);
+    mybuf[myp++] = 0x80 | add;
 }
 
-void send_color(unsigned char color) {
-    if (myp2 == 0) {
-        mybuf[myp++] = 0x01;
-        mybuf[myp] = (color & 0xf0) >> 4;
-    } else {
-        mybuf[myp] |= (color & 0xf0);
-        myp++;
-    }
-    myp2 = !myp2;
+void send_color(unsigned char r, unsigned char g, unsigned char b) {
+    mybuf[myp++] = ((r & 0xc0) >> 6) | ((b & 0xc0) >> 4) | ((g & 0xc0) >> 2);
 }
 
 unsigned char max(unsigned char a, unsigned char b, unsigned char c) {
@@ -134,9 +124,7 @@ int main(int argc, char **argv) {
                 rb = rb*255/mx;
                 rc = rc*255/mx;
             }
-            send_color(ra);
-            send_color(rb);
-            send_color(rc);
+            send_color(ra, rb, rc);
         }
         sendb(f, 1, 0xf0);
         myflush(f);
