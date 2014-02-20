@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "rgb.h"
 
-unsigned char square_ids[SQUARES] = { 6, 1, 2, 3, 4, 5, 7, 8 };
+unsigned char square_ids[SQUARES] = { 1, 4, 8, 3, 4, 5, 7, 8 };
 
 int usb_fd;
 
@@ -42,9 +42,10 @@ unsigned int last_iteration = 0;
 
 
 void rgb_music_init(void) {
-    usb_fd = open("/dev/hidraw0", O_WRONLY);
+    usb_fd = open("/dev/hidraw1", O_WRONLY);
+    //usb_fd = open("tmp", O_WRONLY);
     if (usb_fd < 0) {
-        usb_fd = open("/dev/hidraw1", O_WRONLY);
+        usb_fd = open("/dev/hidraw0", O_WRONLY);
     }
     if (usb_fd < 0) {
         printf("FAILED TO OPEN /dev/hidraw{0,1}\n");
@@ -63,6 +64,6 @@ void rgb_music_iterate(unsigned int last_beat, unsigned int samples_per_beat, un
 
     last_iteration = sample_no;
         
-    fill_table();
+    fill_table(freq);
     draw_table();
 }

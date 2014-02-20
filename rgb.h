@@ -15,7 +15,9 @@ struct rgb {
 };
 struct rgb table[ROWS][COLS*SQUARES];
 
-extern void fill_table();
+extern void visuals_init();
+extern void fill_table(float energy);
+
 extern void rgb_music_init(void);
 extern void rgb_music_iterate(unsigned int last_beat, unsigned int samples_per_beat, unsigned int sample_no, float freq);
 
