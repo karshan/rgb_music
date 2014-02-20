@@ -23,18 +23,21 @@ void clear_table() {
     }
 }
 
-void draw_frame(struct visual_params *arg, char frame[4][4]) {
+void draw_frame(struct visual_params *arg, char frame[4][4], int p) {
     int s, i, j, col;
     struct rgb *out;
+    clear_table();
     for (s = 0; s < SQUARES; s++) {
-        for (i = 0; i < ROWS_P; i++) {
-            for (j = 0; j < COLS_P; j++) {
-                col = j + COLS_P*s;
-                out = &table[i + get_base_height(col)][col];
-                if (frame[i][j]) {
-                    arg->color(out, frame[i][j]);
-                } else {
-                    rgb_init(out, 0, 0, 0);
+        if (prob(p)) {
+            for (i = 0; i < ROWS_P; i++) {
+                for (j = 0; j < COLS_P; j++) {
+                    col = j + COLS_P*s;
+                    out = &table[i + get_base_height(col)][col];
+                    if (frame[i][j]) {
+                        arg->color(out, frame[i][j]);
+                    } else {
+                        rgb_init(out, 0, 0, 0);
+                    }
                 }
             }
         }
@@ -110,8 +113,6 @@ void purple_cyan_cgen(struct rgb *out, int index) {
         cyan_cgen(out, index);
     }
 }
-
-
 
 // linear between 2 primary
 void red_to_green_cgen(struct rgb *out, int index) {
@@ -263,10 +264,13 @@ void in_and_out(struct visual_params *arg) {
         {4,4,4,4}
     };
     if ((arg->iterations % 2) == 0) {
-        draw_frame(arg, f1);
+        draw_frame(arg, f1, arg->energy);
     } else {
-        draw_frame(arg, f2);
+        draw_frame(arg, f2, arg->energy);
     }
+}
+
+void raindrops(struct visual_params *arg) {
 }
 
 void squares(struct visual_params *arg) {
