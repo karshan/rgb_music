@@ -14,6 +14,24 @@ unsigned char rgb_clip(int in) {
     else return (unsigned char)in;
 }
 
+void draw_frame(struct visual_params *arg, char frame[4][4]) {
+    int s, i, j, col;
+    struct rgb *out;
+    for (s = 0; s < SQUARES; s++) {
+        for (i = 0; i < ROWS_P; i++) {
+            for (j = 0; j < COLS_P; j++) {
+                col = j + COLS_P*s;
+                out = &table[i + get_base_height(col)][col];
+                if (frame[i][j]) {
+                    arg->color(out, frame[i][j]);
+                } else {
+                    rgb_init(out, 0, 0, 0);
+                }
+            }
+        }
+    }
+}
+
 // solids
 void red_cgen(struct rgb *out, int index) {
     rgb_init(out, 0xc0, 0x00, 0x00);
@@ -69,6 +87,22 @@ void red_green_cgen(struct rgb *out, int index) {
         green_cgen(out, index);
     }
 }
+void green_pink_cgen(struct rgb *out, int index) {
+    if (index <= 3) {
+        green_cgen(out, index);
+    } else {
+        pink_cgen(out, index);
+    }
+}
+void purple_cyan_cgen(struct rgb *out, int index) {
+    if (index <= 3) {
+        purple_cgen(out, index);
+    } else {
+        cyan_cgen(out, index);
+    }
+}
+
+
 
 // linear between 2 primary
 void red_to_green_cgen(struct rgb *out, int index) {
@@ -140,6 +174,8 @@ void (*cgens[])(struct rgb *out, int index) = {
     red_purple_cgen,
     red_blue_cgen,
     red_green_cgen,
+    green_pink_cgen,
+    purple_cyan_cgen,
     red_to_green_cgen,
     blue_to_green_cgen,
     blue_to_red_cgen,
@@ -149,9 +185,14 @@ void (*cgens[])(struct rgb *out, int index) = {
 int cgens_len = sizeof(cgens)/sizeof(void *);
 
 // MAIN EFFECTS
-void all_on(struct visual_params *arg, struct rgb *out) {
-    int color_index = rand() % 7;
-    arg->color(out, color_index);
+void all_on(struct visual_params *arg) {
+    int i, j, color_index;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            int color_index = rand() % 7;
+            arg->color(&table[i][j], color_index);
+        }
+    }
 }
 
 void some_off(struct visual_params *arg) {
@@ -168,17 +209,13 @@ void some_off(struct visual_params *arg) {
     }
 }
 
-void histogram(struct visual_params *arg, struct rgb *out) {
-    out->r = 0; out->b = 0; out->g = 0;
-    if (arg->row > 0) {
-        if (rgb_nz(&table[arg->row - 1][arg->col])) {
-            if (prob(arg->energy)) {
-                arg->color(out, arg->row);
-            }
-        }
-    } else {
-        if (prob(arg->energy)) {
-            arg->color(out, arg->row);
+void histogram(struct visual_params *arg) {
+    int i, j, color_index;
+    int this_ht;
+    for (j = 0; j < COLS; j++) {
+        this_ht = rand() % ROWS_E; 
+        for (i = 0; i < this_ht; i++) {
+            arg->color(&table[i][j], i);
         }
     }
 }
@@ -199,6 +236,51 @@ void strips_col(struct visual_params *arg) {
         }
     }
 }
+
+void in_and_out(struct visual_params *arg) {
+    char f1[4][4] = {
+        {0,0,0,0},
+        {0,1,1,0},
+        {0,1,1,0},
+        {0,0,0,0}
+    };
+    char f2[4][4] = {
+        {4,4,4,4},
+        {4,0,0,4},
+        {4,0,0,4},
+        {4,4,4,4}
+    };
+    if ((arg->iterations % 2) == 0) {
+        draw_frame(arg, f1);
+    } else {
+        draw_frame(arg, f2);
+    }
+}
+
+void squares(struct visual_params *arg) {
+}
+
+void spiral(struct visual_params *arg) {
+}
+
+void fill_col(struct visual_params *arg) {
+}
+
+void fill_row(struct visual_params *arg) {
+}
+
+void fill_spiral(struct visual_params *arg) {
+}
+ 
+void (*main_effects[])(struct visual_params *out) = {
+    all_on,
+    some_off,
+    histogram,
+    strips_col,
+    in_and_out
+};
+
+int main_effects_len = sizeof(main_effects)/sizeof(void*);
 
 // FILTERS
 void strobe(struct visual_params *arg) {
@@ -333,7 +415,8 @@ void fill_table(int energy, int cgen) {
     vp.energy = (int) energy;
 
     //strips_col(&vp);
-    some_off(&vp);
+    //some_off(&vp);
+    in_and_out(&vp);
 
     //rotate(rand()%4 * (flip()?-1:1), 0);
     //strip_col0(&vp);
