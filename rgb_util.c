@@ -38,8 +38,8 @@ inline int rgb_nz(struct rgb *a) {
 
 int get_base_height(int col) {
     if (col < 16) {
-        return ((col % 8) < 4) == 0 ? 3 : 0;
+        return ((col % 8) < 4) ? 3 : 0;
     } else {
-        return ((col % 8) < 4) == 0 ? 0 : 3;
+        return ((col % 8) < 4) ? 0 : 3;
     }
 }

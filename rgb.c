@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "rgb.h"
 
-unsigned char square_ids[SQUARES] = { 1, 4, 8, 3, 4, 5, 7, 8 };
+unsigned char square_ids[SQUARES] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
 int usb_fd;
 
@@ -26,9 +26,9 @@ void draw_table(void) {
         for (j = 0; j < ROWS_P; j++) {
             for (k = 0; k < COLS_P; k++) {
                 buffer[p++] = 
-                (((table[ROWS_P - 1 - j][k + COLS_P*i].g & 0xc0) >> 2) | 
-                ((table[ROWS_P - 1 - j][k + COLS_P*i].b & 0xc0) >> 4) | 
-                ((table[ROWS_P - 1 - j][k + COLS_P*i].r & 0xc0) >> 6)) & 0x7f;
+                (((table[j][k + COLS_P*i].g & 0xc0) >> 2) | 
+                ((table[j][k + COLS_P*i].b & 0xc0) >> 4) | 
+                ((table[j][k + COLS_P*i].r & 0xc0) >> 6)) & 0x7f;
             }
         }
     }
