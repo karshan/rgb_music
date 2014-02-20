@@ -3,6 +3,7 @@
 
 #define COLS 32
 #define ROWS 4
+#define ROWS_E 7
 #define COLS_P 4
 #define ROWS_P 4
 #define SQUARES COLS/4
@@ -13,10 +14,10 @@ struct rgb {
     unsigned char g;
     unsigned char b;
 };
-struct rgb table[ROWS][COLS*SQUARES];
+struct rgb table[ROWS_E][COLS*SQUARES];
 
 extern void visuals_init();
-extern void fill_table(float energy);
+extern void fill_table(int energy);
 
 extern void rgb_music_init(void);
 extern void rgb_music_iterate(unsigned int last_beat, unsigned int samples_per_beat, unsigned int sample_no, float freq);

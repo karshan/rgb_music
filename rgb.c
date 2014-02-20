@@ -20,15 +20,16 @@ void add_color(unsigned char *buffer, int *p, int *nibble, unsigned char color) 
     *nibble = !(*nibble);
 }
 void draw_table(void) {
-    int i, j, k, p = 0, nibble = 0;
+    int i, j, k, p = 0, col;
     for (i = 0; i < SQUARES; i++) {
         buffer[p++] = 0x80 | square_ids[i];
         for (j = 0; j < ROWS_P; j++) {
             for (k = 0; k < COLS_P; k++) {
+                col = k + COLS_P*i;
                 buffer[p++] = 
-                (((table[j][k + COLS_P*i].g & 0xc0) >> 2) | 
-                ((table[j][k + COLS_P*i].b & 0xc0) >> 4) | 
-                ((table[j][k + COLS_P*i].r & 0xc0) >> 6)) & 0x7f;
+                (((table[j + get_base_height(col)][col].g & 0xc0) >> 2) | 
+                ((table[j + get_base_height(col)][col].b & 0xc0) >> 4) | 
+                ((table[j + get_base_height(col)][col].r & 0xc0) >> 6)) & 0x7f;
             }
         }
     }

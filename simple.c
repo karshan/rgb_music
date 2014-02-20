@@ -1,7 +1,8 @@
-#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/select.h>
 #include <termios.h>
+#include <string.h>
 #include "rgb.h"
 
 struct termios orig_termios;
@@ -105,7 +106,9 @@ int simple_iterations = 0;
 void display_data() {
     int i;
     printf("\033c");
-    printf("enrgy:%d\tms/b:%lf\tmult:%d\n\n", energy, ms_beat, the_multiplier);
+    printf("enrgy:%d\r\n", energy);
+    printf("bpm:%lf\r\n", 1./(((ms_beat)/1000.0)/60.0));
+    printf("mult:%d\r\n", the_multiplier);
 
     fflush(0);
 }
@@ -120,6 +123,7 @@ void clip_data() {
     }
 }
 
+extern void draw_table();
 int main() {
     int i, j;
     char c;
@@ -135,8 +139,9 @@ int main() {
 
         gettimeofday(&now, 0);
 
-        if (tv_diff(&now, &last_beat) > ms_beat/the_multiplier) {
-            rgb_music_iterate(5, 1, 5, energy);
+        if (ms_beat != 0. && (tv_diff(&now, &last_beat) > ms_beat/the_multiplier)) {
+            fill_table(energy);
+            draw_table();
             last_beat = now;
         }
         

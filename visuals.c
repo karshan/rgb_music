@@ -111,7 +111,7 @@ void strips(struct visual_params *arg, struct rgb *out) {
 void strobe(struct visual_params *arg) {
     int i, j;
     if (arg->iterations % 2 == 1) {
-        for (i = 0; i < ROWS; i++) {
+        for (i = 0; i < ROWS_E; i++) {
             for (j = 0; j < COLS; j++) {
                 rgb_init(&(table[i][j]), 0, 0, 0);
             }
@@ -121,7 +121,7 @@ void strobe(struct visual_params *arg) {
 
 void peaker(struct visual_params *arg) {
     int i, j;
-    for (i = 0; i < ROWS - 1; i++) {
+    for (i = 0; i < ROWS_E - 1; i++) {
         for (j = 0; j < COLS; j++) {
             if (rgb_nz(&table[i + 1][j])) {
                 rgb_init(&(table[i][j]), 0, 0, 0);
@@ -130,10 +130,10 @@ void peaker(struct visual_params *arg) {
     }
 }
 
-struct rgb positional_color_table[ROWS][COLS];
+struct rgb positional_color_table[ROWS_E][COLS];
 void positional_color(struct visual_params *arg) {
     int i, j;
-    for (i = 0; i < ROWS; i++) {
+    for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
             if (rgb_nz(&table[i][j])) {
                 table[i][j] = positional_color_table[i][j];
@@ -143,11 +143,11 @@ void positional_color(struct visual_params *arg) {
 }
 
 void translate(int x, int y) {
-    struct rgb buffer[ROWS][COLS];
+    struct rgb buffer[ROWS_E][COLS];
     int i, j;
-    for (i = 0; i < ROWS; i++) {
+    for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
-            if (i - y > 0 && i - y < ROWS && j - x > 0 && j - x < COLS) {
+            if (i - y > 0 && i - y < ROWS_E && j - x > 0 && j - x < COLS) {
                 buffer[i][j] = table[i - y][j - x];
             } else {
                 rgb_init(&buffer[i][j], 0, 0, 0);
@@ -155,7 +155,7 @@ void translate(int x, int y) {
         }
     }
 
-    for (i = 0; i < ROWS; i++) {
+    for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
             table[i][j] = buffer[i][j];
         }
@@ -171,15 +171,15 @@ inline int real_mod(int a, int m) {
 }
 
 void rotate(int x, int y) {
-    struct rgb buffer[ROWS][COLS];
+    struct rgb buffer[ROWS_E][COLS];
     int i, j;
-    for (i = 0; i < ROWS; i++) {
+    for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
-            buffer[i][j] = table[real_mod((i - y), ROWS)][real_mod((j - x), COLS)];
+            buffer[i][j] = table[real_mod((i - y), ROWS_E)][real_mod((j - x), COLS)];
         }
     }
 
-    for (i = 0; i < ROWS; i++) {
+    for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
             table[i][j] = buffer[i][j];
         }
@@ -188,7 +188,7 @@ void rotate(int x, int y) {
 
 void positional_color_init() {
     int i, j;
-    for (i = 0; i < ROWS; i++) {
+    for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
             red_yellow_cgen(&positional_color_table[i][j], get_base_height(j) + i);
         }
@@ -201,7 +201,7 @@ void visuals_init() {
 }
 
 int iterations = 0;
-void fill_table(float energy) {
+void fill_table(int energy) {
     struct visual_params vp;
     int i, j;
     
@@ -212,22 +212,22 @@ void fill_table(float energy) {
     vp.energy = (int) energy;
 
     if (iterations % main_freq == 0) {
-        for (i = 0; i < ROWS; i++) {
+        for (i = 0; i < ROWS_E; i++) {
             for (j = 0; j < COLS; j++) {
                 vp.row = i;
                 vp.col = j;
                 vp.ht = get_base_height(j) + i;
 
                 //strips(&vp, &(table[i][j]));
-                histogram(&vp, &(table[i][j]));
-                //some_off(&vp, &(table[i][j]));
+                //histogram(&vp, &(table[i][j]));
+                some_off(&vp, &(table[i][j]));
             }
         }
     }
     //rotate(1, 0);
-    positional_color(&vp);
+    //positional_color(&vp);
 
-    //strobe(&vp);
+    strobe(&vp);
     //peaker(&vp);
 
     iterations++;
