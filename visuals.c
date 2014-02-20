@@ -14,19 +14,64 @@ unsigned char rgb_clip(int in) {
     else return (unsigned char)in;
 }
 
-void rand_cgen(struct rgb *out, int index) {
-    rgb_rand(out);
+// solids
+void red_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0xc0, 0x00, 0x00);
 }
-
-void purple_cgen(struct rgb *out, int index) {
-    rgb_init(out, 0xc0, 0x00, 0xc0);
-}
-
 void green_cgen(struct rgb *out, int index) {
     rgb_init(out, 0x00, 0xc0, 0x00);
 }
+void blue_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0x00, 0x00, 0xc0);
+}
+void yellow_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0xc0, 0xc0, 0x00);
+}
+void orange_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0xc0, 0x40, 0x00);
+}
+void purple_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0xc0, 0x00, 0xc0);
+}
+void pink_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0xc0, 0x00, 0x40);
+}
+void cyan_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0x00, 0xc0, 0xc0);
+}
 
-void red_yellow_cgen(struct rgb *out, int index) {
+// 2 color palletes
+void red_orange_cgen(struct rgb *out, int index) {
+    if (index <= 3) {
+        red_cgen(out, index);
+    } else {
+        orange_cgen(out, index);
+    }
+}
+void red_purple_cgen(struct rgb *out, int index) {
+    if (index <= 3) {
+        red_cgen(out, index);
+    } else {
+        purple_cgen(out, index);
+    }
+}
+void red_blue_cgen(struct rgb *out, int index) {
+    if (index <= 3) {
+        red_cgen(out, index);
+    } else {
+        blue_cgen(out, index);
+    }
+}
+void red_green_cgen(struct rgb *out, int index) {
+    if (index <= 3) {
+        red_cgen(out, index);
+    } else {
+        green_cgen(out, index);
+    }
+}
+
+// linear between 2 primary
+void red_to_green_cgen(struct rgb *out, int index) {
     if (index == 0) {
         rgb_init(out, 0xc0, 0x00, 0x00);
     } else if (index == 1) {
@@ -43,8 +88,7 @@ void red_yellow_cgen(struct rgb *out, int index) {
         rgb_init(out, 0x00, 0xc0, 0x00);
     }
 }
-
-void blue_cyan_cgen(struct rgb *out, int index) {
+void blue_to_green_cgen(struct rgb *out, int index) {
     if (index == 0) {
         rgb_init(out, 0x00, 0x00, 0xc0);
     } else if (index == 1) {
@@ -61,8 +105,48 @@ void blue_cyan_cgen(struct rgb *out, int index) {
         rgb_init(out, 0x00, 0xc0, 0x00);
     }
 }
+void blue_to_red_cgen(struct rgb *out, int index) {
+    if (index == 0) {
+        rgb_init(out, 0x00, 0x00, 0xc0);
+    } else if (index == 1) {
+        rgb_init(out, 0x40, 0x00, 0xc0);
+    } else if (index == 2) {
+        rgb_init(out, 0x80, 0x00, 0xc0);
+    } else if (index == 3) {
+        rgb_init(out, 0xc0, 0x00, 0xc0);
+    } else if (index == 4) {
+        rgb_init(out, 0xc0, 0x00, 0x80);
+    } else if (index == 5) {
+        rgb_init(out, 0xc0, 0x00, 0x40);
+    } else { 
+        rgb_init(out, 0xc0, 0x00, 0x00);
+    }
+}
 
+void rand_cgen(struct rgb *out, int index) {
+    rgb_rand(out);
+}
 
+void (*cgens[])(struct rgb *out, int index) = {
+    red_cgen,
+    blue_cgen,
+    green_cgen,
+    yellow_cgen,
+    orange_cgen,
+    purple_cgen,
+    pink_cgen,
+    cyan_cgen,
+    red_orange_cgen,
+    red_purple_cgen,
+    red_blue_cgen,
+    red_green_cgen,
+    red_to_green_cgen,
+    blue_to_green_cgen,
+    blue_to_red_cgen,
+    rand_cgen
+};
+
+int cgens_len = sizeof(cgens)/sizeof(void *);
 
 // MAIN EFFECTS
 void all_on(struct visual_params *arg, struct rgb *out) {
@@ -70,12 +154,17 @@ void all_on(struct visual_params *arg, struct rgb *out) {
     arg->color(out, color_index);
 }
 
-void some_off(struct visual_params *arg, struct rgb *out) {
-    int color_index = rand() % 7;
-    if (prob(arg->energy)) {
-        arg->color(out, color_index);
-    } else {
-        rgb_init(out, 0, 0, 0);
+void some_off(struct visual_params *arg) {
+    int i, j, color_index;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            int color_index = rand() % 7;
+            if (prob(arg->energy)) {
+                arg->color(&table[i][j], color_index);
+            } else {
+                rgb_init(&table[i][j], 0, 0, 0);
+            }
+        }
     }
 }
 
@@ -94,16 +183,19 @@ void histogram(struct visual_params *arg, struct rgb *out) {
     }
 }
 
-void strips(struct visual_params *arg, struct rgb *out) {
-    int color_index = arg->row;
-    out->r = 0; out->b = 0; out->g = 0;
-    if (arg->row > 0) {
-        if (rgb_nz(&table[arg->row - 1][arg->col])) {
-            arg->color(out, color_index);
-        }
-    } else {
+void strips_col(struct visual_params *arg) {
+    int i, j;
+    int color_index;
+    for (j = 0; j < COLS; j++) {
         if (prob(arg->energy)) {
-            arg->color(out, color_index);
+            color_index = rand() % 7;
+            for (i = 0; i < ROWS_E; i++) {
+                arg->color(&table[i][j], color_index); 
+            }
+        } else {
+            for (i = 0; i < ROWS_E; i++) {
+                rgb_init(&table[i][j], 0, 0, 0);    
+            }
         }
     }
 }
@@ -131,13 +223,12 @@ void peaker(struct visual_params *arg) {
     }
 }
 
-struct rgb positional_color_table[ROWS_E][COLS];
-void positional_color(struct visual_params *arg) {
+void positional_color_row(struct visual_params *arg) {
     int i, j;
     for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
             if (rgb_nz(&table[i][j])) {
-                table[i][j] = positional_color_table[i][j];
+                arg->color(&table[i][j], i);
             }
         }
     }
@@ -203,8 +294,6 @@ void drag(int x, int y) {
     }
 }
 
-
-
 inline int real_mod(int a, int m) {
     if (a < 0) {
         return (a + m) % m;
@@ -229,46 +318,26 @@ void rotate(int x, int y) {
     }
 }
 
-void positional_color_init() {
-    int i, j;
-    for (i = 0; i < ROWS_E; i++) {
-        for (j = 0; j < COLS; j++) {
-            red_yellow_cgen(&positional_color_table[i][j], get_base_height(j) + i);
-        }
-    }
-}
-
-
 void visuals_init() {
-    positional_color_init();
 }
 
 int iterations = 0;
-void fill_table(int energy) {
+void fill_table(int energy, int cgen) {
     struct visual_params vp;
     int i, j;
     
     int main_freq = 1;
 
-    vp.color = blue_cyan_cgen;
+    vp.color = cgens[cgen];
     vp.iterations = iterations;
     vp.energy = (int) energy;
 
-    if (iterations % main_freq == 0) {
-        for (i = 0; i < ROWS_E; i++) {
-            for (j = 0; j < COLS; j++) {
-                vp.row = i;
-                vp.col = j;
+    //strips_col(&vp);
+    some_off(&vp);
 
-                //strips(&vp, &(table[i][j]));
-                //histogram(&vp, &(table[i][j]));
-                //some_off(&vp, &(table[i][j]));
-            }
-        }
-    }
-    drag(1, 0);
-    strip_col0(&vp);
-    positional_color_col(&vp);
+    //rotate(rand()%4 * (flip()?-1:1), 0);
+    //strip_col0(&vp);
+    //positional_color_col(&vp);
 
     //strobe(&vp);
     //peaker(&vp);

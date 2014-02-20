@@ -66,6 +66,5 @@ void rgb_music_iterate(unsigned int last_beat, unsigned int samples_per_beat, un
 
     last_iteration = sample_no;
         
-    fill_table(freq);
     draw_table();
 }
