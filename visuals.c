@@ -14,6 +14,15 @@ unsigned char rgb_clip(int in) {
     else return (unsigned char)in;
 }
 
+void clear_table() {
+    int i, j;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            rgb_init(&table[i][j], 0, 0, 0);
+        }
+    }
+}
+
 void draw_frame(struct visual_params *arg, char frame[4][4]) {
     int s, i, j, col;
     struct rgb *out;
@@ -211,11 +220,14 @@ void some_off(struct visual_params *arg) {
 
 void histogram(struct visual_params *arg) {
     int i, j, color_index;
-    int this_ht;
+    clear_table();
     for (j = 0; j < COLS; j++) {
-        this_ht = rand() % ROWS_E; 
-        for (i = 0; i < this_ht; i++) {
-            arg->color(&table[i][j], i);
+        for (i = 0; i < ROWS_E; i++) {
+            if (prob(arg->energy)) {
+                arg->color(&table[i][j], i);
+            } else {
+                break;
+            }
         }
     }
 }
@@ -404,7 +416,7 @@ void visuals_init() {
 }
 
 int iterations = 0;
-void fill_table(int energy, int cgen) {
+void fill_table(int energy, int cgen, int effect) {
     struct visual_params vp;
     int i, j;
     
@@ -414,10 +426,8 @@ void fill_table(int energy, int cgen) {
     vp.iterations = iterations;
     vp.energy = (int) energy;
 
-    //strips_col(&vp);
-    //some_off(&vp);
-    in_and_out(&vp);
-
+    main_effects[effect](&vp);
+    
     //rotate(rand()%4 * (flip()?-1:1), 0);
     //strip_col0(&vp);
     //positional_color_col(&vp);

@@ -98,9 +98,10 @@ double compute_ms_beat() {
     }
 }
 
-#define DISPLAY_RLIMIT 128
+#define DISPLAY_RLIMIT 1024
 int energy = 10;
 int cgen = 0;
+int effect = 0;
 double ms_beat = 0;
 int the_multiplier = 1;
 int simple_iterations = 0;
@@ -109,13 +110,13 @@ void display_data() {
     printf("\033c");
     printf("enrgy:%d\r\n", energy);
     printf("cgen:%d\r\n", cgen);
+    printf("effect:%d\r\n", effect);
     printf("bpm:%lf\r\n", 1./(((ms_beat)/1000.0)/60.0));
     printf("mult:%d\r\n", the_multiplier);
 
     fflush(0);
 }
 
-extern int cgens_len;
 void clip_data() {
     if (the_multiplier <= 0) the_multiplier = 1;
 
@@ -129,6 +130,12 @@ void clip_data() {
         cgen = 0;
     } else if (cgen >= cgens_len) {
         cgen = cgens_len - 1;
+    }
+
+    if (effect < 0) {
+        effect = 0;
+    } else if (effect >= main_effects_len) {
+        effect = main_effects_len - 1;
     }
 }
 
@@ -149,7 +156,7 @@ int main() {
         gettimeofday(&now, 0);
 
         if (ms_beat != 0. && (tv_diff(&now, &last_beat) > ms_beat/the_multiplier)) {
-            fill_table(energy, cgen);
+            fill_table(energy, cgen, effect);
             draw_table();
             last_beat = now;
         }
@@ -169,6 +176,10 @@ int main() {
                 cgen++;
             } else if (c == 'y') {
                 cgen--;
+            } else if (c == 'u') {
+                effect++;
+            } else if (c == 'i') {
+                effect--;
             } else if (c == 'b') {
                 beat_add();
                 if (tv_diff(&now, &last_beat) < ms_beat/the_multiplier/2) {
