@@ -21,26 +21,31 @@ void rand_cgen(struct rgb *out, int index) {
 
 void red_yellow_cgen(struct rgb *out, int index) {
     if (index == 0) {
-        rgb_init(out, 0xc0, 0xc0, 0);
+        rgb_init(out, 0xc0, 0x00, 0x00);
     } else if (index == 1) {
-        rgb_init(out, 0xc0, 0x80, 0);
+        rgb_init(out, 0xc0, 0x40, 0x00);
     } else if (index == 2) {
-        rgb_init(out, 0xc0, 0x40, 0);
+        rgb_init(out, 0xc0, 0x80, 0x00);
     } else if (index == 3) {
-        rgb_init(out, 0xc0, 0x00, 0);
+        rgb_init(out, 0xc0, 0xc0, 0x00);
+    } else if (index == 4) {
+        rgb_init(out, 0x80, 0xc0, 0x00);
+    } else if (index == 5) {
+        rgb_init(out, 0x40, 0xc0, 0x00);
+    } else if (index == 6) {
+        rgb_init(out, 0x00, 0xc0, 0x00);
     }
 }
 
 void blue_cyan_cgen(struct rgb *out, int index) {
-    index = rand() % 7;
     if (index == 0) {
-        rgb_init(out, 0x00, 0xc0, 0xc0);
-    } else if (index == 1) {
-        rgb_init(out, 0x00, 0x80, 0xc0);
-    } else if (index == 2) {
-        rgb_init(out, 0x00, 0x40, 0xc0);
-    } else if (index == 3) {
         rgb_init(out, 0x00, 0x00, 0xc0);
+    } else if (index == 1) {
+        rgb_init(out, 0x00, 0x40, 0xc0);
+    } else if (index == 2) {
+        rgb_init(out, 0x00, 0x80, 0xc0);
+    } else if (index == 3) {
+        rgb_init(out, 0x00, 0xc0, 0xc0);
     } else if (index == 4) {
         rgb_init(out, 0x00, 0xc0, 0x80);
     } else if (index == 5) {
@@ -54,12 +59,14 @@ void blue_cyan_cgen(struct rgb *out, int index) {
 
 // MAIN EFFECTS
 void all_on(struct visual_params *arg, struct rgb *out) {
-    arg->color(out, rand() % 4);
+    int color_index = rand() % 7;
+    arg->color(out, color_index);
 }
 
 void some_off(struct visual_params *arg, struct rgb *out) {
+    int color_index = rand() % 7;
     if (prob(arg->energy)) {
-        arg->color(out, 0);
+        arg->color(out, color_index);
     } else {
         rgb_init(out, 0, 0, 0);
     }
@@ -75,11 +82,11 @@ void histogram(struct visual_params *arg, struct rgb *out) {
         }
     } else {
         if (arg->ht == 0) {
-            if (prob(66)) {
+            if (prob(arg->energy)) {
                 arg->color(out, arg->ht/2);
             }
         } else {
-            if (prob(33)) {
+            if (prob(arg->energy/2)) {
                 arg->color(out, arg->ht/2);
             }
         }
@@ -87,14 +94,15 @@ void histogram(struct visual_params *arg, struct rgb *out) {
 }
 
 void strips(struct visual_params *arg, struct rgb *out) {
+    int color_index = arg->ht;
     out->r = 0; out->b = 0; out->g = 0;
     if (arg->row > 0) {
         if (rgb_nz(&table[arg->row - 1][arg->col])) {
-            arg->color(out, 0);
+            arg->color(out, color_index);
         }
     } else {
         if (prob(arg->energy)) {
-            arg->color(out, 0);
+            arg->color(out, color_index);
         }
     }
 }
@@ -127,7 +135,7 @@ void positional_color(struct visual_params *arg) {
     int i, j;
     for (i = 0; i < ROWS; i++) {
         for (j = 0; j < COLS; j++) {
-            if (rgb_nz(&table[i + 1][j])) {
+            if (rgb_nz(&table[i][j])) {
                 table[i][j] = positional_color_table[i][j];
             }
         }
@@ -154,33 +162,70 @@ void translate(int x, int y) {
     }
 }
 
-void visuals_init() {
+inline int real_mod(int a, int m) {
+    if (a < 0) {
+        return (a + m) % m;
+    } else {
+        return a % m;
+    }
+}
+
+void rotate(int x, int y) {
+    struct rgb buffer[ROWS][COLS];
     int i, j;
     for (i = 0; i < ROWS; i++) {
         for (j = 0; j < COLS; j++) {
-            rgb_rand(&positional_color_table[i][j]);
+            buffer[i][j] = table[real_mod((i - y), ROWS)][real_mod((j - x), COLS)];
         }
     }
+
+    for (i = 0; i < ROWS; i++) {
+        for (j = 0; j < COLS; j++) {
+            table[i][j] = buffer[i][j];
+        }
+    }
+}
+
+void positional_color_init() {
+    int i, j;
+    for (i = 0; i < ROWS; i++) {
+        for (j = 0; j < COLS; j++) {
+            red_yellow_cgen(&positional_color_table[i][j], get_base_height(j) + i);
+        }
+    }
+}
+
+
+void visuals_init() {
+    positional_color_init();
 }
 
 int iterations = 0;
 void fill_table(float energy) {
     struct visual_params vp;
     int i, j;
+    
+    int main_freq = 1;
 
     vp.color = blue_cyan_cgen;
     vp.iterations = iterations;
     vp.energy = (int) energy;
 
-    for (i = 0; i < ROWS; i++) {
-        for (j = 0; j < COLS; j++) {
-            vp.row = i;
-            vp.col = j;
-            vp.ht = get_base_height(j) + i;
+    if (iterations % main_freq == 0) {
+        for (i = 0; i < ROWS; i++) {
+            for (j = 0; j < COLS; j++) {
+                vp.row = i;
+                vp.col = j;
+                vp.ht = get_base_height(j) + i;
 
-            some_off(&vp, &(table[i][j]));
+                //strips(&vp, &(table[i][j]));
+                histogram(&vp, &(table[i][j]));
+                //some_off(&vp, &(table[i][j]));
+            }
         }
     }
+    //rotate(1, 0);
+    positional_color(&vp);
 
     //strobe(&vp);
     //peaker(&vp);

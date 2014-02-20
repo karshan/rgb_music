@@ -53,6 +53,7 @@ void rgb_music_init(void) {
     }
 
     srand(time(0));
+    visuals_init();
 }
 
 void rgb_music_iterate(unsigned int last_beat, unsigned int samples_per_beat, unsigned int sample_no, float freq) {

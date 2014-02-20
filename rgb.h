@@ -5,7 +5,7 @@
 #define ROWS 4
 #define COLS_P 4
 #define ROWS_P 4
-#define SQUARES 8
+#define SQUARES COLS/4
 #define BUFFER_SIZE (2*(ROWS*COLS*3 + SQUARES + 1))
 
 struct rgb {
