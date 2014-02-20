@@ -3,7 +3,6 @@
 struct visual_params {
     int row;
     int col;
-    int ht;
     void (*color)(struct rgb *out, int index);
     int energy;
     int iterations;
@@ -19,6 +18,14 @@ void rand_cgen(struct rgb *out, int index) {
     rgb_rand(out);
 }
 
+void purple_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0xc0, 0x00, 0xc0);
+}
+
+void green_cgen(struct rgb *out, int index) {
+    rgb_init(out, 0x00, 0xc0, 0x00);
+}
+
 void red_yellow_cgen(struct rgb *out, int index) {
     if (index == 0) {
         rgb_init(out, 0xc0, 0x00, 0x00);
@@ -32,7 +39,7 @@ void red_yellow_cgen(struct rgb *out, int index) {
         rgb_init(out, 0x80, 0xc0, 0x00);
     } else if (index == 5) {
         rgb_init(out, 0x40, 0xc0, 0x00);
-    } else if (index == 6) {
+    } else { 
         rgb_init(out, 0x00, 0xc0, 0x00);
     }
 }
@@ -50,7 +57,7 @@ void blue_cyan_cgen(struct rgb *out, int index) {
         rgb_init(out, 0x00, 0xc0, 0x80);
     } else if (index == 5) {
         rgb_init(out, 0x00, 0xc0, 0x40);
-    } else if (index == 6) {
+    } else { 
         rgb_init(out, 0x00, 0xc0, 0x00);
     }
 }
@@ -77,24 +84,18 @@ void histogram(struct visual_params *arg, struct rgb *out) {
     if (arg->row > 0) {
         if (rgb_nz(&table[arg->row - 1][arg->col])) {
             if (prob(arg->energy)) {
-                arg->color(out, arg->ht/2);
+                arg->color(out, arg->row);
             }
         }
     } else {
-        if (arg->ht == 0) {
-            if (prob(arg->energy)) {
-                arg->color(out, arg->ht/2);
-            }
-        } else {
-            if (prob(arg->energy/2)) {
-                arg->color(out, arg->ht/2);
-            }
+        if (prob(arg->energy)) {
+            arg->color(out, arg->row);
         }
     }
 }
 
 void strips(struct visual_params *arg, struct rgb *out) {
-    int color_index = arg->ht;
+    int color_index = arg->row;
     out->r = 0; out->b = 0; out->g = 0;
     if (arg->row > 0) {
         if (rgb_nz(&table[arg->row - 1][arg->col])) {
@@ -142,12 +143,32 @@ void positional_color(struct visual_params *arg) {
     }
 }
 
+void positional_color_col(struct visual_params *arg) {
+    int i, j;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            if (rgb_nz(&table[i][j])) {
+                arg->color(&table[i][j], ((float)j/COLS)*7);
+            }
+        }
+    }
+}
+
+void strip_col0(struct visual_params *arg) {
+    int i;
+    if (prob(arg->energy)) {
+        for (i = 0; i < ROWS_E; i++) {
+            arg->color(&table[i][0], i);
+        }
+    }
+}
+
 void translate(int x, int y) {
     struct rgb buffer[ROWS_E][COLS];
     int i, j;
     for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
-            if (i - y > 0 && i - y < ROWS_E && j - x > 0 && j - x < COLS) {
+            if (i - y >= 0 && i - y < ROWS_E && j - x >= 0 && j - x < COLS) {
                 buffer[i][j] = table[i - y][j - x];
             } else {
                 rgb_init(&buffer[i][j], 0, 0, 0);
@@ -161,6 +182,28 @@ void translate(int x, int y) {
         }
     }
 }
+
+void drag(int x, int y) {
+    struct rgb buffer[ROWS_E][COLS];
+    int i, j;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            if (i - y >= 0 && i - y < ROWS_E && j - x >= 0 && j - x < COLS) {
+                buffer[i][j] = table[i - y][j - x];
+            } else {
+                buffer[i][j] = table[i][j];
+            }
+        }
+    }
+
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            table[i][j] = buffer[i][j];
+        }
+    }
+}
+
+
 
 inline int real_mod(int a, int m) {
     if (a < 0) {
@@ -216,18 +259,18 @@ void fill_table(int energy) {
             for (j = 0; j < COLS; j++) {
                 vp.row = i;
                 vp.col = j;
-                vp.ht = get_base_height(j) + i;
 
                 //strips(&vp, &(table[i][j]));
                 //histogram(&vp, &(table[i][j]));
-                some_off(&vp, &(table[i][j]));
+                //some_off(&vp, &(table[i][j]));
             }
         }
     }
-    //rotate(1, 0);
-    //positional_color(&vp);
+    drag(1, 0);
+    strip_col0(&vp);
+    positional_color_col(&vp);
 
-    strobe(&vp);
+    //strobe(&vp);
     //peaker(&vp);
 
     iterations++;

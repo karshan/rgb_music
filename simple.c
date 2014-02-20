@@ -177,7 +177,7 @@ int main() {
         simple_iterations++;
     }
 
-    for (i = 0; i < ROWS; i++) {
+    for (i = 0; i < ROWS_E; i++) {
         for (j = 0; j < COLS; j++) {
             rgb_init(&table[i][j], 0, 0, 0);
         }
