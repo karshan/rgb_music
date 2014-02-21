@@ -581,14 +581,15 @@ void visuals_init() {
 int iterations = 0;
 void (*trans_effect)(struct visual_params *arg) = 0;
 int bak_multiplier = 1;
-void do_transition(int song_no, int effect_no) {
+extern int song_no, effect_no;
+void do_transition() {
     songs[song_no].trans_start = iterations;
     songs[song_no].trans_on = 1;
     bak_multiplier = songs[song_no].vps[effect_no].multiplier;
     songs[song_no].vps[effect_no].multiplier = 1;
 }
 
-void fill_table(int song_no, int effect_no) {
+void fill_table() {
     struct visual_params *vp = &songs[song_no].vps[effect_no];
 
     vp->iterations = iterations;
@@ -608,6 +609,7 @@ void fill_table(int song_no, int effect_no) {
             trans_effect = 0;
             songs[song_no].vps[effect_no].multiplier = bak_multiplier;
             songs[song_no].trans_on = 0;
+            effect_no++;
         }
     }
 

@@ -36,8 +36,8 @@ extern int cgens_len;
 extern int main_effects_len;
 
 extern void visuals_init();
-extern void do_transition(int song_no, int effect_no);
-extern void fill_table(int song_no, int effect_no);
+extern void do_transition();
+extern void fill_table();
 
 extern void rgb_music_init(void);
 extern void rgb_music_iterate(unsigned int last_beat, unsigned int samples_per_beat, unsigned int sample_no, float freq);

@@ -192,7 +192,7 @@ int main() {
         gettimeofday(&now, 0);
 
         if (ms_beat != 0. && (tv_diff(&now, &last_beat) > ms_beat/songs[song_no].vps[effect_no].multiplier)) {
-            fill_table(song_no, effect_no);
+            fill_table();
             draw_table();
             last_beat = now;
         }
@@ -225,7 +225,7 @@ int main() {
             } else if (c == 'p') {
                 songs[song_no].vps[effect_no].dir = !songs[song_no].vps[effect_no].dir;
             } else if (c == 'g') {
-                do_transition(song_no, effect_no);
+                do_transition();
             } else if (c == 'b') {
                 beat_add();
                 if (tv_diff(&now, &last_beat) < ms_beat/songs[song_no].vps[effect_no].multiplier/2) {
