@@ -99,7 +99,7 @@ double compute_ms_beat() {
 }
 
 #define DISPLAY_RLIMIT 1024
-int energy = 10;
+int energy = 20;
 int cgen = 0;
 int effect = 0;
 int dir = 0;
@@ -122,8 +122,8 @@ void display_data() {
 void clip_data() {
     if (the_multiplier <= 0) the_multiplier = 1;
 
-    if (energy <= 0) {
-        energy = 1;
+    if (energy < 0) {
+        energy = 0;
     } else if (energy > 100) {
         energy = 100;
     }
@@ -170,6 +170,10 @@ int main() {
                 energy += 5;
             } else if (c == 'w') {
                 energy -= 5;
+            } else if (c == 'a') {
+                energy += 50;
+            } else if (c == 's') {
+                energy -= 50;
             } else if (c == 'e') {
                 the_multiplier <<= 1;
             } else if (c == 'r') {

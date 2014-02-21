@@ -65,6 +65,35 @@ void translate(int x, int y) {
     }
 }
 
+void drag(int x, int y) {
+    struct rgb buffer[ROWS_E][COLS];
+    int i, j;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            if (i - y >= 0 && i - y < ROWS_E && j - x >= 0 && j - x < COLS) {
+                buffer[i][j] = table[i - y][j - x];
+            } else {
+                buffer[i][j] = table[i][j];
+            }
+        }
+    }
+
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            table[i][j] = buffer[i][j];
+        }
+    }
+}
+
+void strip_col_x(struct visual_params *arg, int x) {
+    int i;
+    if (prob(arg->energy)) {
+        for (i = 0; i < ROWS_E; i++) {
+            arg->color(&table[i][x], i);
+        }
+    }
+}
+
 // solids
 void red_cgen(struct rgb *out, int index) {
     rgb_init(out, 0xc0, 0x00, 0x00);
@@ -104,20 +133,6 @@ void red_purple_cgen(struct rgb *out, int index) {
         red_cgen(out, index);
     } else {
         purple_cgen(out, index);
-    }
-}
-void red_blue_cgen(struct rgb *out, int index) {
-    if (index <= 3) {
-        red_cgen(out, index);
-    } else {
-        blue_cgen(out, index);
-    }
-}
-void red_green_cgen(struct rgb *out, int index) {
-    if (index <= 3) {
-        red_cgen(out, index);
-    } else {
-        green_cgen(out, index);
     }
 }
 void green_pink_cgen(struct rgb *out, int index) {
@@ -203,8 +218,6 @@ void (*cgens[])(struct rgb *out, int index) = {
     cyan_cgen,
     red_orange_cgen,
     red_purple_cgen,
-    red_blue_cgen,
-    red_green_cgen,
     green_pink_cgen,
     purple_cyan_cgen,
     red_to_green_cgen,
@@ -274,16 +287,16 @@ void strips_col(struct visual_params *arg) {
 void strips_diag(struct visual_params *arg) {
     int i, j, color_index;
     clear_table();
-    for (j = 0; j < COLS; j++) {
+    for (j = -4; j < COLS + 4; j++) {
         if (prob(arg->energy)) {
             color_index = rand() % 7;
             for (i = 0; i < ROWS_E; i++) {
                 if (arg->dir) {
-                    if (j + i < COLS) {
+                    if (j + i < COLS && j + i >= 0) {
                         arg->color(&table[i][j + i], color_index);
                     }
                 } else {
-                    if (j - i >= 0) {
+                    if (j + i < COLS && j + i >= 0) {
                         arg->color(&table[i][j - i], color_index);
                     }
                 }
@@ -304,6 +317,26 @@ void in_and_out(struct visual_params *arg) {
         {4,0,0,4},
         {4,0,0,4},
         {4,4,4,4}
+    };
+    if ((arg->iterations % 2) == 0) {
+        draw_frame(arg, f1, arg->energy);
+    } else {
+        draw_frame(arg, f2, arg->energy);
+    }
+}
+
+void x_and_o(struct visual_params *arg) {
+    char f1[4][4] = {
+        {1,0,0,1},
+        {0,1,1,0},
+        {0,1,1,0},
+        {1,0,0,1}
+    };
+    char f2[4][4] = {
+        {0,4,4,0},
+        {4,0,0,4},
+        {4,0,0,4},
+        {0,4,4,0}
     };
     if ((arg->iterations % 2) == 0) {
         draw_frame(arg, f1, arg->energy);
@@ -338,6 +371,8 @@ void spiral(struct visual_params *arg) {
 }
 
 void fill_col(struct visual_params *arg) {
+    drag(arg->dir ? -1 : 1, 0);
+    strip_col_x(arg, arg->dir ? COLS - 1 : 0);
 }
 
 void fill_row(struct visual_params *arg) {
@@ -352,9 +387,11 @@ void (*main_effects[])(struct visual_params *out) = {
     histogram,
     strips_col,
     strips_diag,
+    squares,
     in_and_out,
+    x_and_o,
     raindrops,
-    squares
+    fill_col
 };
 
 int main_effects_len = sizeof(main_effects)/sizeof(void*);
@@ -400,35 +437,6 @@ void positional_color_col(struct visual_params *arg) {
             if (rgb_nz(&table[i][j])) {
                 arg->color(&table[i][j], ((float)j/COLS)*7);
             }
-        }
-    }
-}
-
-void strip_col0(struct visual_params *arg) {
-    int i;
-    if (prob(arg->energy)) {
-        for (i = 0; i < ROWS_E; i++) {
-            arg->color(&table[i][0], i);
-        }
-    }
-}
-
-void drag(int x, int y) {
-    struct rgb buffer[ROWS_E][COLS];
-    int i, j;
-    for (i = 0; i < ROWS_E; i++) {
-        for (j = 0; j < COLS; j++) {
-            if (i - y >= 0 && i - y < ROWS_E && j - x >= 0 && j - x < COLS) {
-                buffer[i][j] = table[i - y][j - x];
-            } else {
-                buffer[i][j] = table[i][j];
-            }
-        }
-    }
-
-    for (i = 0; i < ROWS_E; i++) {
-        for (j = 0; j < COLS; j++) {
-            table[i][j] = buffer[i][j];
         }
     }
 }
