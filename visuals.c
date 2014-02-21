@@ -44,6 +44,26 @@ void draw_frame(struct visual_params *arg, char frame[4][4], int p) {
     }
 }
 
+void translate(int x, int y) {
+    struct rgb buffer[ROWS_E][COLS];
+    int i, j;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            if (i - y >= 0 && i - y < ROWS_E && j - x >= 0 && j - x < COLS) {
+                buffer[i][j] = table[i - y][j - x];
+            } else {
+                rgb_init(&buffer[i][j], 0, 0, 0);
+            }
+        }
+    }
+
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            table[i][j] = buffer[i][j];
+        }
+    }
+}
+
 // solids
 void red_cgen(struct rgb *out, int index) {
     rgb_init(out, 0xc0, 0x00, 0x00);
@@ -250,6 +270,21 @@ void strips_col(struct visual_params *arg) {
     }
 }
 
+void strips_diag(struct visual_params *arg) {
+    int i, j, color_index;
+    clear_table();
+    for (j = 0; j < COLS; j++) {
+        if (prob(arg->energy)) {
+            color_index = rand() % 7;
+            for (i = 0; i < ROWS_E; i++) {
+                if (j - i >= 0) {
+                    arg->color(&table[i][j - i], color_index);
+                }
+            }
+        }
+    }
+}
+
 void in_and_out(struct visual_params *arg) {
     char f1[4][4] = {
         {0,0,0,0},
@@ -271,9 +306,25 @@ void in_and_out(struct visual_params *arg) {
 }
 
 void raindrops(struct visual_params *arg) {
+    int i;
+    translate(1, 0);
+    for (i = 0; i < ROWS_E; i++) {
+        if (prob(arg->energy)) {
+            arg->color(&table[i][0], rand() % 7);
+        }
+    }
 }
 
 void squares(struct visual_params *arg) {
+    char frame[4][4];
+    int color_index = rand() % 7;
+    int i, j;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            frame[i][j] = color_index;
+        }
+    }
+    draw_frame(arg, frame, arg->energy);
 }
 
 void spiral(struct visual_params *arg) {
@@ -293,7 +344,10 @@ void (*main_effects[])(struct visual_params *out) = {
     some_off,
     histogram,
     strips_col,
-    in_and_out
+    strips_diag,
+    in_and_out,
+    raindrops,
+    squares
 };
 
 int main_effects_len = sizeof(main_effects)/sizeof(void*);
@@ -348,26 +402,6 @@ void strip_col0(struct visual_params *arg) {
     if (prob(arg->energy)) {
         for (i = 0; i < ROWS_E; i++) {
             arg->color(&table[i][0], i);
-        }
-    }
-}
-
-void translate(int x, int y) {
-    struct rgb buffer[ROWS_E][COLS];
-    int i, j;
-    for (i = 0; i < ROWS_E; i++) {
-        for (j = 0; j < COLS; j++) {
-            if (i - y >= 0 && i - y < ROWS_E && j - x >= 0 && j - x < COLS) {
-                buffer[i][j] = table[i - y][j - x];
-            } else {
-                rgb_init(&buffer[i][j], 0, 0, 0);
-            }
-        }
-    }
-
-    for (i = 0; i < ROWS_E; i++) {
-        for (j = 0; j < COLS; j++) {
-            table[i][j] = buffer[i][j];
         }
     }
 }
