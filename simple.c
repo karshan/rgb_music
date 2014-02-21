@@ -106,6 +106,7 @@ int dir = 0;
 double ms_beat = 0;
 int the_multiplier = 1;
 int simple_iterations = 0;
+extern int usb_fd;
 void display_data() {
     int i;
     printf("\033c");
@@ -115,6 +116,7 @@ void display_data() {
     printf("dir:%d\r\n", dir);
     printf("bpm:%lf\r\n", 1./(((ms_beat)/1000.0)/60.0));
     printf("mult:%d\r\n", the_multiplier);
+    printf("\r\nusb_fd:%d\r\n", usb_fd);
 
     fflush(0);
 }
@@ -141,6 +143,10 @@ void clip_data() {
     }
 }
 
+int actual_iterations = 0;
+char trans_on = 0;
+int trans_start = 0;
+
 extern void draw_table();
 int main() {
     int i, j;
@@ -154,6 +160,7 @@ int main() {
     while(1) {
         tmp_dbl = compute_ms_beat();
         if (tmp_dbl > 0.01) ms_beat = tmp_dbl;
+        ms_beat = 1.0/((128.1/60)/1000.0);
 
         gettimeofday(&now, 0);
 
@@ -161,6 +168,28 @@ int main() {
             fill_table(energy, cgen, effect, dir);
             draw_table();
             last_beat = now;
+            actual_iterations++;
+
+            if (trans_on == 1) {
+                if ((actual_iterations - trans_start) >= 2) {
+                    cgen = 0;
+                    the_multiplier = 32;
+                    effect = 9;
+                    trans_on = 2;
+                    trans_start = actual_iterations;
+                }
+            } else if (trans_on == 2) {
+                if (actual_iterations - trans_start == COLS) {
+                    dir = !dir;
+                    effect = 10;
+                } else if (actual_iterations - trans_start >= COLS*2) {
+                    effect = 6;
+                    the_multiplier = 8;
+                    energy = 75;
+                    cgen = 10;
+                    trans_on = 0;
+                }
+            }
         }
         
         if (kbhit()) { 
@@ -188,6 +217,10 @@ int main() {
                 effect--;
             } else if (c == 'p') {
                 dir = !dir;
+            } else if (c == 'g') {
+                trans_start = actual_iterations;
+                trans_on = 1;
+                the_multiplier = 1;
             } else if (c == 'b') {
                 beat_add();
                 if (tv_diff(&now, &last_beat) < ms_beat/the_multiplier/2) {

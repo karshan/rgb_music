@@ -9,6 +9,17 @@ unsigned char square_ids[SQUARES] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
 int usb_fd;
 
+void reopen_usb() {
+    close(usb_fd);
+    usb_fd = open("/dev/hidraw2", O_WRONLY);
+    if (usb_fd < 0) {
+        usb_fd = open("/dev/hidraw1", O_WRONLY);
+    }
+    if (usb_fd < 0) {
+        usb_fd = open("/dev/hidraw0", O_WRONLY);
+    }
+}
+
 unsigned char buffer[BUFFER_SIZE];
 void add_color(unsigned char *buffer, int *p, int *nibble, unsigned char color) {
     if (*nibble == 0) {
@@ -35,21 +46,24 @@ void draw_table(void) {
     }
     buffer[p++] = 0xf0;
     
-    write(usb_fd, buffer, p);
+    if (write(usb_fd, buffer, p) < 0) {
+        reopen_usb();
+    }
 }
 
 unsigned int iterations_per_beat = 2;
 unsigned int last_iteration = 0;
 
-
 void rgb_music_init(void) {
-    usb_fd = open("/dev/hidraw1", O_WRONLY);
-    //usb_fd = open("tmp", O_WRONLY);
+    usb_fd = open("/dev/hidraw2", O_WRONLY);
+    if (usb_fd < 0) {
+        usb_fd = open("/dev/hidraw1", O_WRONLY);
+    }
     if (usb_fd < 0) {
         usb_fd = open("/dev/hidraw0", O_WRONLY);
     }
     if (usb_fd < 0) {
-        printf("FAILED TO OPEN /dev/hidraw{0,1}\n");
+        printf("FAILED TO OPEN /dev/hidraw{0,1,2}\n");
         exit(-1);
     }
 
