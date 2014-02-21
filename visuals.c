@@ -6,6 +6,7 @@ struct visual_params {
     void (*color)(struct rgb *out, int index);
     int energy;
     int iterations;
+    int dir;
 };
 
 unsigned char rgb_clip(int in) {
@@ -277,8 +278,14 @@ void strips_diag(struct visual_params *arg) {
         if (prob(arg->energy)) {
             color_index = rand() % 7;
             for (i = 0; i < ROWS_E; i++) {
-                if (j - i >= 0) {
-                    arg->color(&table[i][j - i], color_index);
+                if (arg->dir) {
+                    if (j + i < COLS) {
+                        arg->color(&table[i][j + i], color_index);
+                    }
+                } else {
+                    if (j - i >= 0) {
+                        arg->color(&table[i][j - i], color_index);
+                    }
                 }
             }
         }
@@ -307,10 +314,10 @@ void in_and_out(struct visual_params *arg) {
 
 void raindrops(struct visual_params *arg) {
     int i;
-    translate(1, 0);
+    translate(arg->dir ? -1 : 1, 0);
     for (i = 0; i < ROWS_E; i++) {
         if (prob(arg->energy)) {
-            arg->color(&table[i][0], rand() % 7);
+            arg->color(&table[i][arg->dir ? COLS - 1: 0], rand() % 7);
         }
     }
 }
@@ -454,7 +461,7 @@ void visuals_init() {
 }
 
 int iterations = 0;
-void fill_table(int energy, int cgen, int effect) {
+void fill_table(int energy, int cgen, int effect, int dir) {
     struct visual_params vp;
     int i, j;
     
@@ -462,7 +469,8 @@ void fill_table(int energy, int cgen, int effect) {
 
     vp.color = cgens[cgen];
     vp.iterations = iterations;
-    vp.energy = (int) energy;
+    vp.energy = energy;
+    vp.dir = dir;
 
     main_effects[effect](&vp);
     

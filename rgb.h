@@ -20,7 +20,7 @@ extern int cgens_len;
 extern int main_effects_len;
 
 extern void visuals_init();
-extern void fill_table(int energy, int cgen, int effect);
+extern void fill_table(int energy, int cgen, int effect, int dir);
 
 extern void rgb_music_init(void);
 extern void rgb_music_iterate(unsigned int last_beat, unsigned int samples_per_beat, unsigned int sample_no, float freq);

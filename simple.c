@@ -102,6 +102,7 @@ double compute_ms_beat() {
 int energy = 10;
 int cgen = 0;
 int effect = 0;
+int dir = 0;
 double ms_beat = 0;
 int the_multiplier = 1;
 int simple_iterations = 0;
@@ -111,6 +112,7 @@ void display_data() {
     printf("enrgy:%d\r\n", energy);
     printf("cgen:%d\r\n", cgen);
     printf("effect:%d\r\n", effect);
+    printf("dir:%d\r\n", dir);
     printf("bpm:%lf\r\n", 1./(((ms_beat)/1000.0)/60.0));
     printf("mult:%d\r\n", the_multiplier);
 
@@ -156,7 +158,7 @@ int main() {
         gettimeofday(&now, 0);
 
         if (ms_beat != 0. && (tv_diff(&now, &last_beat) > ms_beat/the_multiplier)) {
-            fill_table(energy, cgen, effect);
+            fill_table(energy, cgen, effect, dir);
             draw_table();
             last_beat = now;
         }
@@ -180,6 +182,8 @@ int main() {
                 effect++;
             } else if (c == 'i') {
                 effect--;
+            } else if (c == 'p') {
+                dir = !dir;
             } else if (c == 'b') {
                 beat_add();
                 if (tv_diff(&now, &last_beat) < ms_beat/the_multiplier/2) {
