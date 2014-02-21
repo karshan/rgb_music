@@ -28,14 +28,15 @@ struct song {
     struct visual_params vps[6];
     void (*effects[6])(struct visual_params *arg);
     int effects_len;
+    int trans_on;
+    int trans_start;
 };
-
-
 
 extern int cgens_len;
 extern int main_effects_len;
 
 extern void visuals_init();
+extern void do_transition(int song_no, int effect_no);
 extern void fill_table(int song_no, int effect_no);
 
 extern void rgb_music_init(void);

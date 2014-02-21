@@ -115,6 +115,7 @@ void display_data() {
     printf("effect:%d\r\n", effect_no);
     printf("dir:%d\r\n", songs[song_no].vps[effect_no].dir);
     printf("mult:%d\r\n", songs[song_no].vps[effect_no].multiplier);
+    printf("\r\ntrans_on:%d\r\n", songs[song_no].trans_on);
     printf("\r\nbpm:%lf\r\n", 1./(((ms_beat)/1000.0)/60.0));
     printf("\r\nusb_fd:%d\r\n", usb_fd);
     for (i = ROWS_E - 1; i >= 0; i--) {
@@ -170,7 +171,6 @@ void clip_data() {
     }
 }
 
-int actual_iterations = 0;
 char trans_on = 0;
 int trans_start = 0;
 
@@ -195,30 +195,6 @@ int main() {
             fill_table(song_no, effect_no);
             draw_table();
             last_beat = now;
-            actual_iterations++;
-
-#if 0
-            if (trans_on == 1) {
-                if ((actual_iterations - trans_start) >= 2) {
-                    cgen = 0;
-                    the_multiplier = 32;
-                    effect = 9;
-                    trans_on = 2;
-                    trans_start = actual_iterations;
-                }
-            } else if (trans_on == 2) {
-                if (actual_iterations - trans_start == COLS) {
-                    dir = !dir;
-                    effect = 10;
-                } else if (actual_iterations - trans_start >= COLS*2) {
-                    effect = 6;
-                    the_multiplier = 8;
-                    energy = 75;
-                    cgen = 10;
-                    trans_on = 0;
-                }
-            }
-#endif
         }
         
         if (kbhit()) { 
@@ -249,9 +225,7 @@ int main() {
             } else if (c == 'p') {
                 songs[song_no].vps[effect_no].dir = !songs[song_no].vps[effect_no].dir;
             } else if (c == 'g') {
-                /*trans_start = actual_iterations;
-                trans_on = 1;
-                the_multiplier = 1;*/
+                do_transition(song_no, effect_no);
             } else if (c == 'b') {
                 beat_add();
                 if (tv_diff(&now, &last_beat) < ms_beat/songs[song_no].vps[effect_no].multiplier/2) {

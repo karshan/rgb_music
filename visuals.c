@@ -455,6 +455,7 @@ struct song songs[] = {
             some_off,
         },
         .effects_len = 1,
+        .trans_on = 0,
     }, 
     { 
         .vps = {
@@ -477,6 +478,7 @@ struct song songs[] = {
             some_off,
         },
         .effects_len = 2,
+        .trans_on = 0,
     }, { 
         .vps = {
             {
@@ -498,6 +500,7 @@ struct song songs[] = {
             strips_col,
         },
         .effects_len = 2,
+        .trans_on = 0,
     },
 };
 
@@ -576,12 +579,43 @@ void visuals_init() {
 }
 
 int iterations = 0;
+void (*trans_effect)(struct visual_params *arg) = 0;
+int bak_multiplier = 1;
+void do_transition(int song_no, int effect_no) {
+    songs[song_no].trans_start = iterations;
+    songs[song_no].trans_on = 1;
+    bak_multiplier = songs[song_no].vps[effect_no].multiplier;
+    songs[song_no].vps[effect_no].multiplier = 1;
+}
+
 void fill_table(int song_no, int effect_no) {
     struct visual_params *vp = &songs[song_no].vps[effect_no];
 
     vp->iterations = iterations;
 
-    songs[song_no].effects[effect_no](vp);
+    if (songs[song_no].trans_on == 1) {
+        if ((iterations - songs[song_no].trans_start) >= 1) {
+            songs[song_no].vps[effect_no].multiplier = 32;
+            trans_effect = fill_col;
+            songs[song_no].trans_on = 2;
+            songs[song_no].trans_start = iterations;
+        }
+    } else if (songs[song_no].trans_on == 2) {
+        if (iterations - songs[song_no].trans_start == COLS) {
+            songs[song_no].vps[effect_no].dir = !songs[song_no].vps[effect_no].dir;
+            trans_effect = unfill_col;
+        } else if (iterations - songs[song_no].trans_start >= COLS*2) {
+            trans_effect = 0;
+            songs[song_no].vps[effect_no].multiplier = bak_multiplier;
+            songs[song_no].trans_on = 0;
+        }
+    }
+
+    if (trans_effect == 0) {
+        songs[song_no].effects[effect_no](vp);
+    } else {
+        trans_effect(vp); 
+    }
     
     //rotate(rand()%4 * (flip()?-1:1), 0);
     //strip_col0(&vp);
