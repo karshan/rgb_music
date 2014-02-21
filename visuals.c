@@ -1,12 +1,16 @@
 #include "rgb.h"
 
 struct visual_params {
-    int row;
-    int col;
     void (*color)(struct rgb *out, int index);
     int energy;
     int iterations;
     int dir;
+};
+
+struct song {
+    struct visual_params vps[6];
+    void (*effects[6])(struct visual_params *arg);
+    int multipliers[6];
 };
 
 unsigned char rgb_clip(int in) {

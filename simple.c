@@ -98,7 +98,7 @@ double compute_ms_beat() {
     }
 }
 
-#define DISPLAY_RLIMIT 1024
+#define DISPLAY_RLIMIT 4096*4
 int energy = 20;
 int cgen = 0;
 int effect = 0;
@@ -108,7 +108,7 @@ int the_multiplier = 1;
 int simple_iterations = 0;
 extern int usb_fd;
 void display_data() {
-    int i;
+    int i, j;
     printf("\033c");
     printf("enrgy:%d\r\n", energy);
     printf("cgen:%d\r\n", cgen);
@@ -117,6 +117,29 @@ void display_data() {
     printf("bpm:%lf\r\n", 1./(((ms_beat)/1000.0)/60.0));
     printf("mult:%d\r\n", the_multiplier);
     printf("\r\nusb_fd:%d\r\n", usb_fd);
+    for (i = ROWS_E - 1; i >= 0; i--) {
+        for (j = 0; j < COLS; j++) {
+            printf("\x1b[0;");
+            if (table[i][j].r > 0 && table[i][j].g > 0 && table[i][j].b > 0) {
+                printf("37;");
+            } else if (table[i][j].r > 0 && table[i][j].g > 0) {
+                printf("33;");
+            } else if (table[i][j].r > 0 && table[i][j].b > 0) {
+                printf("35;");
+            } else if (table[i][j].g > 0 && table[i][j].b > 0) {
+                printf("36;");
+            } else if (table[i][j].r > 0) {
+                printf("31;");
+            } else if (table[i][j].g > 0) {
+                printf("32;");
+            } else if (table[i][j].b > 0) {
+                printf("34;");
+            }
+            printf("40m#");
+        }
+        printf("\r\n");
+    }
+    printf("\x1b[0;30;47m");
 
     fflush(0);
 }
@@ -235,7 +258,7 @@ int main() {
 
         clip_data();
 
-        if (simple_iterations % DISPLAY_RLIMIT == 0) {
+        if ((simple_iterations % DISPLAY_RLIMIT) == 0) {
             display_data();
         }
 

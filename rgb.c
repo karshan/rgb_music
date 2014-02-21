@@ -64,7 +64,6 @@ void rgb_music_init(void) {
     }
     if (usb_fd < 0) {
         printf("FAILED TO OPEN /dev/hidraw{0,1,2}\n");
-        exit(-1);
     }
 
     srand(time(0));
