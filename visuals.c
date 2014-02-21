@@ -1,18 +1,5 @@
 #include "rgb.h"
 
-struct visual_params {
-    void (*color)(struct rgb *out, int index);
-    int energy;
-    int iterations;
-    int dir;
-};
-
-struct song {
-    struct visual_params vps[6];
-    void (*effects[6])(struct visual_params *arg);
-    int multipliers[6];
-};
-
 unsigned char rgb_clip(int in) {
     if (in < 0) return 0;
     else if (in > 255) return 255;
@@ -453,6 +440,69 @@ void (*main_effects[])(struct visual_params *out) = {
 
 int main_effects_len = sizeof(main_effects)/sizeof(void*);
 
+struct song songs[] = {
+    { 
+        .vps = {
+            {
+                .color = red_orange_cgen,
+                .energy = 0,
+                .iterations = 0,
+                .dir = 0,
+                .multiplier = 4
+            }, 
+        },
+        .effects = {
+            some_off,
+        },
+        .effects_len = 1,
+    }, 
+    { 
+        .vps = {
+            {
+                .color = purple_cyan_cgen,
+                .energy = 0,
+                .iterations = 0,
+                .dir = 0,
+                .multiplier = 4
+            }, {
+                .color = blue_to_green_cgen,
+                .energy = 30,
+                .iterations = 0,
+                .dir = 0,
+                .multiplier = 8
+            }
+        },
+        .effects = {
+            in_and_out,
+            some_off,
+        },
+        .effects_len = 2,
+    }, { 
+        .vps = {
+            {
+                .color = red_to_green_cgen,
+                .energy = 45,
+                .iterations = 0,
+                .dir = 0,
+                .multiplier = 4
+            }, {
+                .color = red_orange_cgen,
+                .energy = 10,
+                .iterations = 0,
+                .dir = 0,
+                .multiplier = 8
+            }
+        },
+        .effects = {
+            histogram,
+            strips_col,
+        },
+        .effects_len = 2,
+    },
+};
+
+int songs_len = sizeof(songs)/sizeof(struct song);
+
 // FILTERS
 void strobe(struct visual_params *arg) {
     int i, j;
@@ -526,18 +576,12 @@ void visuals_init() {
 }
 
 int iterations = 0;
-void fill_table(int energy, int cgen, int effect, int dir) {
-    struct visual_params vp;
-    int i, j;
-    
-    int main_freq = 1;
+void fill_table(int song_no, int effect_no) {
+    struct visual_params *vp = &songs[song_no].vps[effect_no];
 
-    vp.color = cgens[cgen];
-    vp.iterations = iterations;
-    vp.energy = energy;
-    vp.dir = dir;
+    vp->iterations = iterations;
 
-    main_effects[effect](&vp);
+    songs[song_no].effects[effect_no](vp);
     
     //rotate(rand()%4 * (flip()?-1:1), 0);
     //strip_col0(&vp);

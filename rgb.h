@@ -16,11 +16,27 @@ struct rgb {
 };
 struct rgb table[ROWS_E][COLS*SQUARES];
 
+struct visual_params {
+    void (*color)(struct rgb *out, int index);
+    int energy;
+    int iterations;
+    int dir;
+    int multiplier;
+};
+
+struct song {
+    struct visual_params vps[6];
+    void (*effects[6])(struct visual_params *arg);
+    int effects_len;
+};
+
+
+
 extern int cgens_len;
 extern int main_effects_len;
 
 extern void visuals_init();
-extern void fill_table(int energy, int cgen, int effect, int dir);
+extern void fill_table(int song_no, int effect_no);
 
 extern void rgb_music_init(void);
 extern void rgb_music_iterate(unsigned int last_beat, unsigned int samples_per_beat, unsigned int sample_no, float freq);
