@@ -6,6 +6,7 @@
 #include "rgb.h"
 
 extern struct song songs[];
+extern struct song pro_song;
 extern int songs_len;
 
 struct termios orig_termios;
@@ -106,16 +107,30 @@ double ms_beat = 0;
 int simple_iterations = 0;
 int song_no = 0;
 int effect_no = 0;
+int pro_mode = 0;
+int pro_cgen_no = 0;
+int pro_effect_no = 0;
+int pro_next_effect = 0;
 extern int usb_fd;
 void display_data() {
     int i, j;
+    struct song *song;
+    if (pro_mode) {
+        song = &pro_song;
+    } else {
+        song = &songs[song_no];
+    }
     printf("\033c");
-    printf("enrgy:%d\r\n", songs[song_no].vps[effect_no].energy);
+    printf("enrgy:%d\r\n", song->vps[effect_no].energy);
     printf("song:%d\r\n", song_no);
     printf("effect:%d\r\n", effect_no);
-    printf("dir:%d\r\n", songs[song_no].vps[effect_no].dir);
-    printf("mult:%d\r\n", songs[song_no].vps[effect_no].multiplier);
-    printf("\r\ntrans_on:%d\r\n", songs[song_no].trans_on);
+    printf("dir:%d\r\n", song->vps[effect_no].dir);
+    printf("mult:%d\r\n", song->vps[effect_no].multiplier);
+    printf("\r\npro mode:%d\r\n", pro_mode);
+    printf("pro cgen:%d\r\n", pro_cgen_no);
+    printf("pro effect:%d\r\n", pro_effect_no);
+    printf("pro next:%d\r\n", pro_next_effect);
+    printf("\r\ntrans_on:%d\r\n", song->trans_on);
     printf("\r\nbpm:%lf\r\n", 1./(((ms_beat)/1000.0)/60.0));
     printf("\r\nusb_fd:%d\r\n", usb_fd);
     for (i = ROWS_E - 1; i >= 0; i--) {
@@ -146,16 +161,23 @@ void display_data() {
 }
 
 void clip_data() {
-    if (songs[song_no].vps[effect_no].multiplier <= 0) {
-        songs[song_no].vps[effect_no].multiplier = 1;
-    } else if(songs[song_no].vps[effect_no].multiplier > 64) {
-        songs[song_no].vps[effect_no].multiplier = 64;
+    struct song *song;
+    if (pro_mode) {
+        song = &pro_song;
+    } else {
+        song = &songs[song_no];
     }
 
-    if (songs[song_no].vps[effect_no].energy < 0) {
-        songs[song_no].vps[effect_no].energy = 0;
-    } else if (songs[song_no].vps[effect_no].energy > 100) {
-        songs[song_no].vps[effect_no].energy = 100;
+    if (song->vps[effect_no].multiplier <= 0) {
+        song->vps[effect_no].multiplier = 1;
+    } else if(song->vps[effect_no].multiplier > 64) {
+        song->vps[effect_no].multiplier = 64;
+    }
+
+    if (song->vps[effect_no].energy < 0) {
+        song->vps[effect_no].energy = 0;
+    } else if (song->vps[effect_no].energy > 100) {
+        song->vps[effect_no].energy = 100;
     }
 
     if (song_no < 0) {
@@ -166,8 +188,26 @@ void clip_data() {
 
     if (effect_no < 0) {
         effect_no = 0;
-    } else if (effect_no >= songs[song_no].effects_len) {
-        effect_no = songs[song_no].effects_len - 1;
+    } else if (effect_no >= song->effects_len) {
+        effect_no = song->effects_len - 1;
+    }
+
+    if (pro_cgen_no < 0) {
+        pro_cgen_no = 0;
+    } else if (pro_cgen_no >= cgens_len) {
+        pro_cgen_no = cgens_len - 1;
+    }
+
+    if (pro_effect_no < 0) {
+        pro_effect_no = 0;
+    } else if (pro_effect_no >= main_effects_len) {
+        pro_effect_no = main_effects_len - 1;
+    }
+
+    if (pro_next_effect < 0) {
+        pro_next_effect = 0;
+    } else if (pro_next_effect >= main_effects_len) {
+        pro_next_effect = main_effects_len - 1;
     }
 }
 
@@ -180,18 +220,24 @@ int main() {
     char c;
     double tmp_dbl;
     struct timeval now, last_beat = {0};
+    struct song *song;
 
     set_conio_terminal_mode();
     rgb_music_init();   
 
     while(1) {
+        if (pro_mode) {
+            song = &pro_song;
+        } else {
+            song = &songs[song_no];
+        }
         tmp_dbl = compute_ms_beat();
         if (tmp_dbl > 0.01) ms_beat = tmp_dbl;
         ms_beat = 1.0/((128.1/60)/1000.0);
 
         gettimeofday(&now, 0);
 
-        if (ms_beat != 0. && (tv_diff(&now, &last_beat) > ms_beat/songs[song_no].vps[effect_no].multiplier)) {
+        if (ms_beat != 0. && (tv_diff(&now, &last_beat) > ms_beat/song->vps[effect_no].multiplier)) {
             fill_table();
             draw_table();
             last_beat = now;
@@ -201,34 +247,48 @@ int main() {
             c = getch();
            
             if (c == 'q') {
-                songs[song_no].vps[effect_no].energy += 5;
+                song->vps[effect_no].energy += 5;
             } else if (c == 'w') {
-                songs[song_no].vps[effect_no].energy -= 5;
+                song->vps[effect_no].energy -= 5;
             } else if (c == 'a') {
-                songs[song_no].vps[effect_no].energy += 50;
+                song->vps[effect_no].energy += 50;
             } else if (c == 's') {
-                songs[song_no].vps[effect_no].energy -= 50;
+                song->vps[effect_no].energy -= 50;
             } else if (c == 'e') {
-                songs[song_no].vps[effect_no].multiplier <<= 1;
+                song->vps[effect_no].multiplier <<= 1;
             } else if (c == 'r') {
-                songs[song_no].vps[effect_no].multiplier >>= 1;
-            } else if (c == 't') {
+                song->vps[effect_no].multiplier >>= 1;
+            } else if (c == 'h') {
                 effect_no++;
-            } else if (c == 'y') {
+            } else if (c == 'j') {
                 effect_no--;
-            } else if (c == 'u') {
+            } else if (c == 'k') {
                 song_no++;
                 effect_no = 0;
-            } else if (c == 'i') {
+            } else if (c == 'l') {
                 song_no--;
                 effect_no = 0;
-            } else if (c == 'p') {
-                songs[song_no].vps[effect_no].dir = !songs[song_no].vps[effect_no].dir;
+            } else if (c == 'd') {
+                song->vps[effect_no].dir = !song->vps[effect_no].dir;
             } else if (c == 'g') {
                 do_transition();
+            } else if (c == 'p') {
+                pro_mode = !pro_mode;
+            } else if (c == 't') {
+                pro_cgen_no++;
+            } else if (c == 'y') {
+                pro_cgen_no--;
+            } else if (c == 'u') {
+                pro_effect_no++;
+            } else if (c == 'i') {
+                pro_effect_no--;
+            } else if (c == 'n') {
+                pro_next_effect++;
+            } else if (c == 'm') {
+                pro_next_effect--;
             } else if (c == 'b') {
                 beat_add();
-                if (tv_diff(&now, &last_beat) < ms_beat/songs[song_no].vps[effect_no].multiplier/2) {
+                if (tv_diff(&now, &last_beat) < ms_beat/song->vps[effect_no].multiplier/2) {
                     last_beat = now;
                 }
             } 

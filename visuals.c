@@ -441,7 +441,7 @@ void (*main_effects[])(struct visual_params *out) = {
 int main_effects_len = sizeof(main_effects)/sizeof(void*);
 
 struct song songs[] = {
-    { 
+    {  // 0
         .vps = {
             {
                 .color = red_orange_cgen,
@@ -456,8 +456,7 @@ struct song songs[] = {
         },
         .effects_len = 1,
         .trans_on = 0,
-    }, 
-    { 
+    }, {  // 1
         .vps = {
             {
                 .color = purple_cyan_cgen,
@@ -471,15 +470,22 @@ struct song songs[] = {
                 .iterations = 0,
                 .dir = 0,
                 .multiplier = 8
+            }, {
+                .color = green_pink_cgen,
+                .energy = 30,
+                .iterations = 0,
+                .dir = 0,
+                .multiplier = 8
             }
         },
         .effects = {
             in_and_out,
             some_off,
+            x_and_o,
         },
-        .effects_len = 2,
+        .effects_len = 3,
         .trans_on = 0,
-    }, { 
+    }, { // 2
         .vps = {
             {
                 .color = red_to_green_cgen,
@@ -488,7 +494,13 @@ struct song songs[] = {
                 .dir = 0,
                 .multiplier = 4
             }, {
-                .color = red_orange_cgen,
+                .color = purple_cgen,
+                .energy = 10,
+                .iterations = 0,
+                .dir = 0,
+                .multiplier = 8
+            }, {
+                .color = purple_cgen,
                 .energy = 10,
                 .iterations = 0,
                 .dir = 0,
@@ -498,10 +510,29 @@ struct song songs[] = {
         .effects = {
             histogram,
             strips_col,
+            strips_diag,
         },
-        .effects_len = 2,
+        .effects_len = 3,
         .trans_on = 0,
     },
+};
+
+struct song pro_song = {
+    .vps = {
+        {
+            .color = purple_cyan_cgen,
+            .energy = 30,
+            .iterations = 0,
+            .dir = 0,
+            .multiplier = 4
+        },
+    },
+    .effects = {
+        in_and_out,
+    },
+    .effects_len = 1,
+    .trans_on = 0,
+
 };
 
 int songs_len = sizeof(songs)/sizeof(struct song);
@@ -582,39 +613,62 @@ int iterations = 0;
 void (*trans_effect)(struct visual_params *arg) = 0;
 int bak_multiplier = 1;
 extern int song_no, effect_no;
+
+extern int pro_mode;
+extern int pro_cgen_no;
+extern int pro_effect_no;
+extern int pro_next_effect;
 void do_transition() {
-    songs[song_no].trans_start = iterations;
-    songs[song_no].trans_on = 1;
-    bak_multiplier = songs[song_no].vps[effect_no].multiplier;
-    songs[song_no].vps[effect_no].multiplier = 1;
+    struct song *song = &songs[song_no];
+    if (pro_mode) {
+        song = &pro_song;
+    }
+    song->trans_start = iterations;
+    song->trans_on = 1;
+    bak_multiplier = song->vps[effect_no].multiplier;
+    song->vps[effect_no].multiplier = 1;
 }
 
 void fill_table() {
-    struct visual_params *vp = &songs[song_no].vps[effect_no];
+    struct song *song = &songs[song_no];
+    struct visual_params *vp;
+
+    if (pro_mode) {
+        song = &pro_song;
+    }
+    vp = &song->vps[effect_no];
 
     vp->iterations = iterations;
 
-    if (songs[song_no].trans_on == 1) {
-        if ((iterations - songs[song_no].trans_start) >= 1) {
-            songs[song_no].vps[effect_no].multiplier = 32;
+    if (song->trans_on == 1) {
+        if ((iterations - song->trans_start) >= 1) {
+            song->vps[effect_no].multiplier = 32;
             trans_effect = fill_col;
-            songs[song_no].trans_on = 2;
-            songs[song_no].trans_start = iterations;
+            song->trans_on = 2;
+            song->trans_start = iterations;
         }
-    } else if (songs[song_no].trans_on == 2) {
-        if (iterations - songs[song_no].trans_start == COLS) {
-            songs[song_no].vps[effect_no].dir = !songs[song_no].vps[effect_no].dir;
+    } else if (song->trans_on == 2) {
+        if (iterations - song->trans_start == COLS) {
+            song->vps[effect_no].dir = !song->vps[effect_no].dir;
             trans_effect = unfill_col;
-        } else if (iterations - songs[song_no].trans_start >= COLS*2) {
+        } else if (iterations - song->trans_start >= COLS*2) {
             trans_effect = 0;
-            songs[song_no].vps[effect_no].multiplier = bak_multiplier;
-            songs[song_no].trans_on = 0;
+            song->vps[effect_no].multiplier = bak_multiplier;
+            song->trans_on = 0;
             effect_no++;
+            if (pro_mode) {
+                pro_effect_no = pro_next_effect;
+            }
         }
     }
 
     if (trans_effect == 0) {
-        songs[song_no].effects[effect_no](vp);
+        if (pro_mode) {
+            vp->color = cgens[pro_cgen_no];
+            main_effects[pro_effect_no](vp);
+        } else {
+            song->effects[effect_no](vp);
+        }
     } else {
         trans_effect(vp); 
     }
