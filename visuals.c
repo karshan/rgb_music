@@ -87,10 +87,22 @@ void drag(int x, int y) {
 
 void strip_col_x(struct visual_params *arg, int x) {
     int i;
-    if (prob(arg->energy)) {
-        for (i = 0; i < ROWS_E; i++) {
-            arg->color(&table[i][x], i);
-        }
+    for (i = 0; i < ROWS_E; i++) {
+        arg->color(&table[i][x], i);
+    }
+}
+
+void clear_col_x(struct visual_params *arg, int x) {
+    int i;
+    for (i = 0; i < ROWS_E; i++) {
+        rgb_init(&table[i][x], 0, 0, 0);
+    }
+}
+
+void strip_row_x(struct visual_params *arg, int x) {
+    int i;
+    for (i = 0; i < COLS; i++) {
+        arg->color(&table[x][i], ((float)i/COLS)*7);
     }
 }
 
@@ -371,11 +383,50 @@ void spiral(struct visual_params *arg) {
 }
 
 void fill_col(struct visual_params *arg) {
+    /*int i, j;
+    char is_full = 1;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            if (!rgb_nz(&table[i][j])) {
+                is_full = 0;
+            }
+        }
+    }
+    if (is_full) { clear_table(); return; }*/
     drag(arg->dir ? -1 : 1, 0);
     strip_col_x(arg, arg->dir ? COLS - 1 : 0);
 }
 
+void unfill_col(struct visual_params *arg) {
+    /*int i, j;
+    char is_full = 1;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            if (!rgb_nz(&table[i][j])) {
+                is_full = 0;
+            }
+        }
+    }
+    if (is_full) { clear_table(); return; }*/
+    drag(arg->dir ? -1 : 1, 0);
+    clear_col_x(arg, arg->dir ? COLS - 1 : 0);
+}
+
+
+
 void fill_row(struct visual_params *arg) {
+    int i, j;
+    char is_full = 1;
+    for (i = 0; i < ROWS_E; i++) {
+        for (j = 0; j < COLS; j++) {
+            if (!rgb_nz(&table[i][j])) {
+                is_full = 0;
+            }
+        }
+    }
+    if (is_full) { clear_table(); return; }
+    drag(0, arg->dir ? -1 : 1);
+    strip_row_x(arg, arg->dir ? ROWS_E - 1 : 0);
 }
 
 void fill_spiral(struct visual_params *arg) {
@@ -391,7 +442,9 @@ void (*main_effects[])(struct visual_params *out) = {
     in_and_out,
     x_and_o,
     raindrops,
-    fill_col
+    fill_col,
+    unfill_col,
+    fill_row,
 };
 
 int main_effects_len = sizeof(main_effects)/sizeof(void*);
