@@ -111,6 +111,8 @@ int pro_mode = 0;
 int pro_cgen_no = 0;
 int pro_effect_no = 0;
 int pro_next_effect = 0;
+int pro_next_cgen = 0;
+//int pro_next_mult = 0;
 extern int usb_fd;
 void display_data() {
     int i, j;
@@ -129,7 +131,8 @@ void display_data() {
     printf("\r\npro mode:%d\r\n", pro_mode);
     printf("pro cgen:%d\r\n", pro_cgen_no);
     printf("pro effect:%d\r\n", pro_effect_no);
-    printf("pro next:%d\r\n", pro_next_effect);
+    printf("next effect:%d\r\n", pro_next_effect);
+    printf("next cgen:%d\r\n", pro_next_cgen);
     printf("\r\ntrans_on:%d\r\n", song->trans_on);
     printf("\r\nbpm:%lf\r\n", 1./(((ms_beat)/1000.0)/60.0));
     printf("\r\nusb_fd:%d\r\n", usb_fd);
@@ -196,6 +199,12 @@ void clip_data() {
         pro_cgen_no = 0;
     } else if (pro_cgen_no >= cgens_len) {
         pro_cgen_no = cgens_len - 1;
+    }
+    
+    if (pro_next_cgen < 0) {
+        pro_next_cgen = 0;
+    } else if (pro_next_cgen >= cgens_len) {
+        pro_next_cgen = cgens_len - 1;
     }
 
     if (pro_effect_no < 0) {
@@ -268,7 +277,7 @@ int main() {
             } else if (c == 'l') {
                 song_no--;
                 effect_no = 0;
-            } else if (c == 'd') {
+            } else if (c == 'c') {
                 song->vps[effect_no].dir = !song->vps[effect_no].dir;
             } else if (c == 'g') {
                 do_transition();
@@ -286,6 +295,10 @@ int main() {
                 pro_next_effect++;
             } else if (c == 'm') {
                 pro_next_effect--;
+            } else if (c == 'd') {
+                pro_next_cgen++;
+            } else if (c == 'f') {
+                pro_next_cgen--;
             } else if (c == 'b') {
                 beat_add();
                 if (tv_diff(&now, &last_beat) < ms_beat/song->vps[effect_no].multiplier/2) {

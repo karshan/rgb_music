@@ -618,6 +618,7 @@ extern int pro_mode;
 extern int pro_cgen_no;
 extern int pro_effect_no;
 extern int pro_next_effect;
+extern int pro_next_cgen;
 void do_transition() {
     struct song *song = &songs[song_no];
     if (pro_mode) {
@@ -658,6 +659,7 @@ void fill_table() {
             effect_no++;
             if (pro_mode) {
                 pro_effect_no = pro_next_effect;
+                pro_cgen_no = pro_next_cgen;
             }
         }
     }
